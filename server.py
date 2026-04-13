@@ -486,6 +486,29 @@ async def daftar_perangkat(req: Request):
     conn.close()
     return {"status": "ok", "pesan": f"Perangkat {body.get('nama')} terdaftar."}
 
+@app.post("/api/sensor")
+async def api_sensor(req: Request):
+    """
+    Terima data sensor dari laptop yang terhubung ke Arduino via USB.
+    Dipanggil oleh script kirim_railway.py di laptop teman.
+    """
+    try:
+        data = await req.json()
+        if "timestamp" not in data:
+            data["timestamp"] = datetime.now().isoformat()
+
+        result = save_to_db(data)
+
+        global latest_data
+        latest_data = result
+
+        await manager.broadcast_dashboard({"type": "data", "payload": result})
+        await proses_peringatan(result)
+
+        return {"status": "ok", "kategori": result.get("kategori"), "magnitude_g": result.get("magnitude_g")}
+    except Exception as e:
+        return {"status": "error", "pesan": str(e)}
+
 @app.get("/api/peringatan")
 async def api_peringatan(limit: int = 20):
     conn = sqlite3.connect(DB_FILE)
