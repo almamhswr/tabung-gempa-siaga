@@ -179,7 +179,7 @@ def get_stats():
         "avg_g":  round(row[5] or 0, 4),
     }
 
-def get_tabung_aktif_terakhir(detik: int = 10) -> int:
+def get_tabung_aktif_terakhir(detik: int = 5) -> int:
     """Hitung berapa tabung unik aktif dalam N detik terakhir."""
     conn = sqlite3.connect(DB_FILE)
     row = conn.execute("""
@@ -264,18 +264,11 @@ COOLDOWN_NOTIF = 30
 last_notif_time: float = 0.0
 
 async def proses_peringatan(data: dict):
-    """
-    Sesuai flowchart kolom C:
-    1. Cek apakah getaran semakin kecil?
-    2. Validasi sebagai gempa
-    3. Cek kategori merah/oranye
-    4. Cek jumlah tabung > MIN_TABUNG_AKTIF
-    5. Kirim perintah ke tabung + notifikasi ke perangkat
-    """
     global last_notif_time
 
-    kategori = data.get("kategori", "HIJAU")
-    mag_g    = data.get("magnitude_g", 0.0)
+    kategori  = data.get("kategori", "HIJAU")
+    mag_g     = data.get("magnitude_g", 0.0)
+    tabung_id = data.get("tabung_id", "TABUNG-1")
 
     # Hanya proses jika oranye atau merah
     if kategori not in ("ORANYE", "MERAH"):
@@ -286,38 +279,44 @@ async def proses_peringatan(data: dict):
     if now - last_notif_time < COOLDOWN_NOTIF:
         return
 
-    # Cek jumlah tabung aktif (sesuai flowchart: > MIN_TABUNG_AKTIF)
-    jml_tabung = get_tabung_aktif_terakhir(detik=10)
-    if jml_tabung < MIN_TABUNG_AKTIF:
-        # Untuk pengembangan: jika hanya 1 tabung, tetap kirim tapi beri keterangan
-        if jml_tabung == 0:
-            return
-        # 1-4 tabung: kirim peringatan lokal saja
-        pesan = f"[LOKAL] Getaran {kategori} terdeteksi dari {jml_tabung} tabung. Magnitudo: {mag_g:.3f}"
-    else:
-        pesan = f"[PERINGATAN GEMPA] Getaran {kategori} terdeteksi dari {jml_tabung} tabung! Magnitudo: {mag_g:.3f}. Segera lakukan tindakan pengamanan!"
-
     last_notif_time = now
+
+    # Cek tabung mana saja yang aktif ORANYE/MERAH dalam 3 detik terakhir
+    conn = sqlite3.connect(DB_FILE)
+    rows = conn.execute("""
+        SELECT DISTINCT tabung_id FROM sensor_data
+        WHERE timestamp >= datetime('now', '-3 seconds')
+          AND kategori IN ('ORANYE','MERAH')
+    """).fetchall()
+    conn.close()
+
+    tabung_aktif = [r[0] for r in rows]
+    if tabung_id not in tabung_aktif:
+        tabung_aktif.append(tabung_id)
+
+    jml_tabung   = len(tabung_aktif)
+    nama_tabung  = ", ".join(tabung_aktif)
+
+    if jml_tabung == 1:
+        pesan = f"[PERINGATAN] Getaran {kategori} terdeteksi dari {nama_tabung}. Magnitudo: {mag_g:.3f}"
+    else:
+        pesan = f"[PERINGATAN GEMPA] Getaran {kategori} terdeteksi dari {jml_tabung} tabung ({nama_tabung})! Magnitudo: {mag_g:.3f}. Segera lakukan tindakan pengamanan!"
 
     # Buat paket peringatan
     peringatan = {
-        "type":      "PERINGATAN",
-        "timestamp": datetime.now().isoformat(),
-        "kategori":  kategori,
-        "label":     data.get("label", ""),
-        "magnitude_g": mag_g,
+        "type":          "PERINGATAN",
+        "timestamp":     datetime.now().isoformat(),
+        "kategori":      kategori,
+        "label":         data.get("label", ""),
+        "magnitude_g":   mag_g,
         "jumlah_tabung": jml_tabung,
-        "pesan":     pesan,
-        "perintah":  "AKTIFKAN_ALARM" if kategori == "MERAH" else "STANDBY_ALARM",
+        "tabung_aktif":  nama_tabung,
+        "pesan":         pesan,
+        "perintah":      "AKTIFKAN_ALARM" if kategori == "MERAH" else "STANDBY_ALARM",
     }
 
-    # Broadcast ke dashboard
     await manager.broadcast_dashboard({"type": "peringatan", "payload": peringatan})
-
-    # Kirim ke semua perangkat subscriber
     terkirim = await manager.broadcast_peringatan(peringatan)
-
-    # Simpan log
     log_peringatan(kategori, mag_g, jml_tabung, pesan, terkirim)
     print(f"[Peringatan] {pesan} | Terkirim ke {terkirim} perangkat")
 
