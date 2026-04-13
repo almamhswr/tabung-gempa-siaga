@@ -609,10 +609,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <div class="grid">
   <div class="card"><div class="label">Total Pembacaan</div><div class="value" id="v-total">—</div></div>
-  <div class="card"><div class="label">Magnitude (g)</div><div class="value" id="v-mag">—</div><div class="sub">terkini</div></div>
+  <div class="card"><div class="label">Magnitudo</div><div class="value" id="v-mag">—</div><div class="sub">terkini</div></div>
   <div class="card"><div class="label">Siaga (Oranye)</div><div class="value" id="v-oranye" style="color:#fdba74">—</div></div>
   <div class="card"><div class="label">Bahaya (Merah)</div><div class="value" id="v-merah" style="color:#fca5a5">—</div></div>
-  <div class="card"><div class="label">Maks (g)</div><div class="value" id="v-maxg">—</div></div>
+  <div class="card"><div class="label">Maks Magnitudo</div><div class="value" id="v-maxg">—</div></div>
   <div class="card"><div class="label">Perangkat Online</div><div class="value" id="v-subscriber" style="color:#60a5fa">—</div></div>
 </div>
 
@@ -625,7 +625,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div> Merah ≥6,1 — Gempa Besar–Hebat</div>
 </div>
 
-<div class="section-title">Grafik Magnitude Real-time (satuan g)</div>
+<div class="section-title">Grafik Magnitudo Real-time (Skala 0–10)</div>
 <div id="grafik"><canvas id="chart"></canvas></div>
 
 <div class="section-title">Peringatan Terkirim</div>
@@ -639,7 +639,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div class="section-title">Log Data Sensor</div>
 <div id="log">
   <table>
-    <thead><tr><th>Waktu</th><th>Magnitude (g)</th><th>AX</th><th>AY</th><th>AZ</th><th>Kategori</th></tr></thead>
+    <thead><tr><th>Waktu</th><th>Magnitudo</th><th>AX</th><th>AY</th><th>AZ</th><th>Kategori</th></tr></thead>
     <tbody id="log-body"></tbody>
   </table>
 </div>
