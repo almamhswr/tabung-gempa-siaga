@@ -42,9 +42,10 @@ DB_FILE      = "gempa.db"
 
 # Threshold sesuai flowchart (dalam satuan g, 1g = 16384 raw MPU6050 @ ±2g)
 # magnitude = (abs(ax)+abs(ay)+abs(az)) / 16384
-THRESHOLD_HIJAU   = 0.01   # < 0.01g  → Aman (Hijau)
-THRESHOLD_KUNING  = 0.05   # < 0.05g  → Waspada (Kuning)
-THRESHOLD_ORANYE  = 0.30   # < 0.30g  → Siaga (Oranye)
+THRESHOLD_HIJAU   = 1.0   # < 1.0  → Aman (Hijau)
+THRESHOLD_KUNING  = 3.0   # < 3.0  → Waspada (Kuning)
+THRESHOLD_ORANYE  = 6.0   # < 6.0  → Siaga (Oranye)
+# >= 6.0 → Bahaya (Merah)
 # >= 0.30g → Bahaya (Merah)
 
 # Jumlah tabung minimum yang harus terdeteksi agar peringatan dikirim
@@ -54,11 +55,11 @@ MIN_TABUNG_AKTIF  = 5
 
 def klasifikasi(magnitude_g: float) -> dict:
     """
-    Klasifikasi 4 level sesuai flowchart:
-      Hijau   < 0.01g  → Aman
-      Kuning  < 0.05g  → Waspada
-      Oranye  < 0.30g  → Siaga
-      Merah  >= 0.30g  → Bahaya
+    Klasifikasi 4 level skala 0-10:
+      Hijau   < 1.0  → Aman
+      Kuning  < 3.0  → Waspada
+      Oranye  < 6.0  → Siaga
+      Merah  >= 6.0  → Bahaya
     """
     if magnitude_g < THRESHOLD_HIJAU:
         return {"kategori": "HIJAU",  "label": "Aman",   "peringatan": False}
@@ -126,7 +127,7 @@ def init_db():
 def save_to_db(data: dict) -> dict:
     """Simpan data sensor, kembalikan data lengkap dengan klasifikasi."""
     mag_raw = data.get("mag", 0)
-    mag_g   = round(mag_raw / 16384.0, 4)   # konversi ke satuan g
+    mag_g   = round(mag_raw / 100.0, 2)   # konversi balik ke skala 0-10
     info    = klasifikasi(mag_g)
 
     conn = sqlite3.connect(DB_FILE)
