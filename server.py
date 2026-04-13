@@ -293,9 +293,9 @@ async def proses_peringatan(data: dict):
         if jml_tabung == 0:
             return
         # 1-4 tabung: kirim peringatan lokal saja
-        pesan = f"[LOKAL] Getaran {kategori} terdeteksi dari {jml_tabung} tabung. Magnitude: {mag_g:.3f}g"
+        pesan = f"[LOKAL] Getaran {kategori} terdeteksi dari {jml_tabung} tabung. Magnitudo: {mag_g:.3f}"
     else:
-        pesan = f"[PERINGATAN GEMPA] Getaran {kategori} terdeteksi dari {jml_tabung} tabung! Magnitude: {mag_g:.3f}g. Segera lakukan tindakan pengamanan!"
+        pesan = f"[PERINGATAN GEMPA] Getaran {kategori} terdeteksi dari {jml_tabung} tabung! Magnitudo: {mag_g:.3f}. Segera lakukan tindakan pengamanan!"
 
     last_notif_time = now
 
@@ -727,9 +727,9 @@ function addLogRow(d) {
 function updateUI(d) {
   const mg  = d.magnitude_g != null ? d.magnitude_g : (d.mag || 0) / 16384;
   const kat = d.kategori || 'HIJAU';
-  document.getElementById('v-mag').textContent = mg.toFixed(4);
+  document.getElementById('v-mag').textContent = mg.toFixed(2);
   const box = document.getElementById('status-box');
-  box.textContent = `${d.label || kat}  (${mg.toFixed(4)}g)`;
+  box.textContent = `${d.label || kat}  (${mg.toFixed(2)})`;
   box.className = kat;
   magHistory.push(mg);
   if (magHistory.length > MAX_POINTS) magHistory.shift();
