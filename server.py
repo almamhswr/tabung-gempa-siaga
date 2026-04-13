@@ -42,10 +42,10 @@ DB_FILE      = "gempa.db"
 
 # Threshold sesuai flowchart (dalam satuan g, 1g = 16384 raw MPU6050 @ ±2g)
 # magnitude = (abs(ax)+abs(ay)+abs(az)) / 16384
-THRESHOLD_HIJAU   = 1.0   # < 1.0  → Aman (Hijau)
-THRESHOLD_KUNING  = 3.0   # < 3.0  → Waspada (Kuning)
-THRESHOLD_ORANYE  = 6.0   # < 6.0  → Siaga (Oranye)
-# >= 6.0 → Bahaya (Merah)
+THRESHOLD_HIJAU   = 2.5   # < 2,5  → Aman (Hijau) - tidak dirasakan
+THRESHOLD_KUNING  = 5.5   # < 5,5  → Waspada (Kuning) - dirasakan, kerusakan minim
+THRESHOLD_ORANYE  = 6.1   # < 6,1  → Siaga (Oranye) - kerusakan ringan hingga signifikan
+# >= 6,1 → Bahaya (Merah) - gempa besar hingga hebat
 # >= 0.30g → Bahaya (Merah)
 
 # Jumlah tabung minimum yang harus terdeteksi agar peringatan dikirim
@@ -55,11 +55,11 @@ MIN_TABUNG_AKTIF  = 5
 
 def klasifikasi(magnitude_g: float) -> dict:
     """
-    Klasifikasi 4 level skala 0-10:
-      Hijau   < 1.0  → Aman
-      Kuning  < 3.0  → Waspada
-      Oranye  < 6.0  → Siaga
-      Merah  >= 6.0  → Bahaya
+    Klasifikasi 4 level skala Richter (0-10):
+      Hijau   < 2,5  → Aman (tidak dirasakan)
+      Kuning  < 5,5  → Waspada (dirasakan, kerusakan minim)
+      Oranye  < 7,0  → Siaga (kerusakan ringan hingga signifikan)
+      Merah  >= 7,0  → Bahaya (gempa besar hingga hebat)
     """
     if magnitude_g < THRESHOLD_HIJAU:
         return {"kategori": "HIJAU",  "label": "Aman",   "peringatan": False}
@@ -619,10 +619,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div id="status-box">— Menunggu Data Sensor —</div>
 
 <div class="legenda">
-  <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div> Hijau &lt;0,01g — Aman</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#ca8a04"></div> Kuning 0,01–0,05g — Waspada</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#ea580c"></div> Oranye 0,05–0,3g — Siaga</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div> Merah &gt;0,3g — Bahaya</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div> Hijau &lt;2,5 — Tidak Dirasakan</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#ca8a04"></div> Kuning 2,5–5,4 — Kerusakan Minim</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#ea580c"></div> Oranye 5,5–6,0 — Kerusakan Ringan–Signifikan</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div> Merah ≥6,1 — Gempa Besar–Hebat</div>
 </div>
 
 <div class="section-title">Grafik Magnitude Real-time (satuan g)</div>
